@@ -118,6 +118,7 @@ async function professorstart() {
       if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return;
       if (mek.key.id.startsWith('FatihArridho_')) return;
       const m = smsg(professor, mek);
+      console.log("👉 This message's JID is:", m.chat);
       require("./professor-xmd")(professor, m, chatUpdate);
     } catch (err) {
       console.log(err);

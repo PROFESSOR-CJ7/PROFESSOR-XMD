@@ -162,24 +162,25 @@ module.exports = async function(professor, m, chatUpdate, store) {
                 await professor.sendPresenceUpdate('recording', chatid);
                 await sleep(2000);
             }
-        }
+         }
 
         const reply = async function(txt, chatid = m.chat) {
             await simulateType(chatid);
             await simulateRecord(chatid);
+            
             professor.sendMessage(chatid, {
-                text: txt,
-                contextInfo: {
-                    mentionedJid: [sender],
-                    externalAdReply: {
-                        title: "PROFESSOR XMD AI HUB",
-                        body: "ADVANCED AI ENGINE 🚀",
-                        thumbnailUrl: "https://i.ibb.co/XfWWsTGM/20250805-233326.jpg",
-                        sourceUrl: "https://whatsapp.com/channel/0029Vb5mgYNFi8xZirsFij2l",
+              text: txt,
+              contextInfo: {
+                mentionedJid: [sender],
+                externalAdReply: {
+                  title: "PROFESSOR XMD AI HUB",
+                  body: "ADVANCED AI ENGINE 🚀",
+                  thumbnailUrl: "https://files.catbox.moe/y96u7s.jpg",
+                  sourceUrl: "https://whatsapp.com/channel/0029Vb5mgYNFi8xZirsFij2l",
                         renderLargerThumbnail: true,
                         showAdAttribution: true
-                    }
                 }
+              }
             }, { quoted: m });
         };
 
@@ -257,7 +258,7 @@ module.exports = async function(professor, m, chatUpdate, store) {
 ┃ ❒ listonline
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
-┃   *❒ANTI-SPAM & SECURITY*
+┃   *❒ANTI-SPAM MENU*
 ┃ ❒ antilink on/off
 ┃ ❒ antidelete on/off
 ┃ ❒ antideletesendinbox on/off
@@ -265,7 +266,7 @@ module.exports = async function(professor, m, chatUpdate, store) {
 ┃ ❒ delete
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
-┃   *❒ENTERTAINMENT*
+┃   *❒FUN MENU*
 ┃ ❒ truth
 ┃ ❒ dare
 ┃ ❒ love @user
@@ -276,7 +277,7 @@ module.exports = async function(professor, m, chatUpdate, store) {
 ┃ ❒ play song name
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
-┃   *❒BOT UTILS*
+┃   *❒BOT SETTINGS*
 ┃ ❒ autoreply on/off
 ┃ ❒ setautoreply
 ┃ ❒ setprefix !
@@ -293,10 +294,14 @@ module.exports = async function(professor, m, chatUpdate, store) {
                         forwardingScore: 999,
                         isForwarded: true,
                         mentionedJid: [sender],
+                        forwardedNewsletterMessageInfo: {
+                            newsletterName: "PROFESSOR XMD",
+                            newsletterJid: "120363424730632024@newsletter"
+                        },
                         externalAdReply: {
                             title: "PROFESSOR XMD AI HUB",
-                            body: "ADVANCED AI ENGINE 🚀",
-                            thumbnailUrl: "https://i.ibb.co/XfWWsTGM/20250805-233326.jpg",
+                            body: "ADVANCED AI 	ENGINE 🚀",
+                            thumbnailUrl: "https://files.catbox.moe/y96u7s.jpg",
                             sourceUrl: "https://whatsapp.com/channel/0029Vb5mgYNFi8xZirsFij2l",
                             mediaType: 1,
                             renderLargerThumbnail: true,
