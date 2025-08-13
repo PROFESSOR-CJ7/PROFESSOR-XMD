@@ -209,10 +209,30 @@ module.exports = async function(professor, m, chatUpdate, store) {
         });
 
         // --- Auto Typing/Recording for DM to owner and any command ---
-        if ((isOwner(sender) || isCmd) && (autotype || autorecord)) {
-            await simulateType(m.chat);
-            await simulateRecord(m.chat);
+      professor.ev.on('messages.upsert', async ({ messages }) => {
+        const msg = messages?.[0];
+        const jid = msg?.key?.remoteJid;
+
+        if (!msg || msg.key.fromMe) return;
+
+        const isGroup = jid.endsWith('@g.us');
+
+        if (global.autotype) {
+          if (
+            (global.autotypeTarget === 'group' && isGroup) ||
+            (global.autotypeTarget === 'dm' && !isGroup) ||
+            (global.autotypeTarget === 'all')
+          ) await professor.sendPresenceUpdate('composing', jid);
         }
+
+        if (global.autorecord) {
+          if (
+            (global.autorecordTarget === 'group' && isGroup) ||
+            (global.autorecordTarget === 'dm' && !isGroup) ||
+            (global.autorecordTarget === 'all')
+          ) await professor.sendPresenceUpdate('recording', jid);
+        }
+      });
 
         // --- AutoReply system ---
         if (!isCmd && autoReplyOn && autoreplies && autoreplies[body?.toLowerCase()]) {
@@ -238,7 +258,8 @@ module.exports = async function(professor, m, chatUpdate, store) {
 ┃ ❒ ${prefix}self
 ┃ ❒ ${prefix}ping
 ┃ ❒ owner
-┃ ❒ xowner
+┃ ❒ getpp
+┃ ❒ edward
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
 ┃   *❒GROUP MENU*
@@ -254,23 +275,25 @@ module.exports = async function(professor, m, chatUpdate, store) {
 ┃ ❒ demote @user
 ┃ ❒ gpclose
 ┃ ❒ gpopen
-┃ ❒ groupdesc NewDesc
+┃ ❒ groupdesc
 ┃ ❒ listonline
+┃ ❒ getgp
+┃ ❒ link
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
 ┃   *❒ANTI-SPAM MENU*
 ┃ ❒ antilink on/off
 ┃ ❒ antidelete on/off
 ┃ ❒ antideletesendinbox on/off
-┃ ❒ warn @user reason
+┃ ❒ warn 
 ┃ ❒ delete
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
 ┃   *❒FUN MENU*
 ┃ ❒ truth
 ┃ ❒ dare
-┃ ❒ love @user
-┃ ❒ hack @user
+┃ ❒ love 
+┃ ❒ hack 
 ┗━━━━━━━━━━━━━━❒
 ╭━━━━━━━━━━━━━━❒
 ┃   *❒MUSIC & MEDIA*
@@ -323,26 +346,103 @@ module.exports = async function(professor, m, chatUpdate, store) {
             case 'addowner': await handleAddOwner(m, args, sender, reply); break;
             case 'delowner': await handleDelOwner(m, args, sender, reply); break;
             case 'listowners': await handleListOwners(m, reply); break;
+          function extractTargetJid(text, m) {
+    // Ikiwa kuna mtu ametagwa
+              if (m.mentionedJid && m.mentionedJid.length > 0) {
+                  return m.mentionedJid[0];
+    }
+    // Ikiwa kuna namba imeandikwa moja kwa moja
+              if (text && /^\d+$/.test(text)) {
+                  return text + "@s.whatsapp.net";
+              }
+              return null;
+          }
             case 'hack': {
-                const target = text.match(/@\d+/)?.[0];
-                if (target) {
-                    await professor.sendMessage(m.chat, { text: `⚡ Initiating hack on ${target}...`, mentions: [target.replace('@', '') + '@s.whatsapp.net'] });
-                    await simulateType(m.chat);
-                    await sleep(3000);
-                    await professor.sendMessage(m.chat, { text: `📡 Accessing files of ${target}...`, mentions: [target.replace('@', '') + '@s.whatsapp.net'] });
-                    await sleep(3000);
-                    await professor.sendMessage(m.chat, { text: `💥 Successfully hacked ${target}. Data compromised! (PRANKED 😂)`, mentions: [target.replace('@', '') + '@s.whatsapp.net'] });
-                } else {
-                    await professor.sendMessage(m.chat, { text: `❌ Please mention a user to hack.` });
-                }
+              const targetJid = extractTargetJid(text, m);
+              if (!targetJid) {
+               await professor.sendMessage(m.chat, { text: 'Usage: .hack @number (reply/mention)' }, { quoted: m });
+               break;
+              }
+
+              const handle = `@${targetJid.replace('@s.whatsapp.net','')}`;
+
+              const header = [
+                '╔═════════════════════════════╗',
+                '║ 🔐 SYSTEM SECURITY ALERT ║',
+                '╚═════════════════════════════╝',
+                `⛔ Breach signal linked to ${handle}`,
+                'Initializing containment protocol...'
+              ].join('\n');
+
+              await simulateType(professor, m.chat, 1000);
+              await professor.sendMessage(m.chat, { text: header, mentions: [targetJid] });
+              await sleep(1200);
+
+              const effects = [
+                '🔎 Tracing digital footprint...',
+                '🛰️ Pinging satellite proxies...',
+                '💾 Extracting data clusters...',
+                '🧬 Matching biometric hash...',
+                '🪞 Analyzing browser shadows...',
+                '🧠 Syncing behavioral mesh...',
+                '⚡ Injecting trace algorithm...',
+                '🔗 Linking synthetic profile...',
+                '💣 Queueing firewall override...'
+              ];
+
+              for (const step of effects) {
+                await simulateType(professor, m.chat, 800);
+                await professor.sendMessage(m.chat, { text: step, mentions: [targetJid] });
+                await sleep(1100);
+              }
+
+              const finale = [
+                '🚨 ACCESS GRANTED TO CORE NODE',
+                `📍 Target ${handle} synchronized`,
+                '⌛ Final verification underway...'
+              ].join('\n');
+
+              await simulateType(professor, m.chat, 900);
+              await professor.sendMessage(m.chat, { text: finale, mentions: [targetJid] });
             }
             break;
             case 'listonline': {
-                if (!isGroup) return reply('Group only');
-                const groupMetadata = await professor.groupMetadata(m.chat);
-                let onlineUsers = groupMetadata.participants.filter(p => p.isOnline).map(p => `@${p.id.split('@')[0]}`).join('\n');
-                if (!onlineUsers) onlineUsers = 'No members are online.';
-                await professor.sendMessage(m.chat, { text: `🟢 Online Members:\n${onlineUsers}`, mentions: groupMetadata.participants.map(p => p.id) });
+              if (!isGroup) return reply('⚠️ This command can only be used in group chats.');
+
+              const groupMetadata = await professor.groupMetadata(m.chat);
+              const onlineNow = [];
+
+              for (const participant of groupMetadata.participants) {
+                const jid = participant.id;
+
+                try {
+                  await professor.presenceSubscribe(jid); // subscribe to presence
+                  await delay(200); // allow time for sync
+
+                  const presenceData = await professor.getPresence(jid);
+
+                  if (presenceData?.lastKnownPresence === 'available') {
+                    const name = groupMetadata?.participants?.find(p => p.id === jid)?.name || jid.split('@')[0];
+                    onlineNow.push(`🟢 ${name} is currently online`);
+                  }
+                } catch (error) {
+                  continue;
+                }
+              }
+
+              if (onlineNow.length === 0) {
+                return reply('😴 No members are online at the moment.');
+              }
+
+              const response = [
+                '📶 Online Members (Live Detection)',
+                '────────────────────────────',
+                ...onlineNow,
+                '────────────────────────────',
+                `🕒 Checked at: ${new Date().toLocaleTimeString()}`
+              ].join('\n');
+
+              await professor.sendMessage(m.chat, { text: response }, { quoted: m });
             }
             break;
             case 'remove':
@@ -388,21 +488,75 @@ module.exports = async function(professor, m, chatUpdate, store) {
             }
             break;
             case 'promote': {
-                if (!isGroup) return reply('Group only');
-                if (!isGroupAdmins && !Access) return reply('Admin only');
-                let target = m.mentionedJid && m.mentionedJid[0];
-                if (!target) return reply('Tag the user to promote!');
+              if (!isGroup) return reply('⚠️ This command only works in groups.');
+              if (!isGroupAdmins && !Access) return reply('🛑 You need to be an admin to do that.');
+
+              const target = m.mentionedJid?.[0] 
+                || (text?.match(/^\d{9,15}$/) ? `${text.trim()}@s.whatsapp.net` : null);
+
+              if (!target) return reply('👤 Mention a user or enter their number (e.g., 2557xxxxxxx)');
+
+              try {
                 await professor.groupParticipantsUpdate(m.chat, [target], 'promote');
-                reply('User promoted to admin!');
+
+                const imageUrl = 'https://files.catbox.moe/y96u7s.jpg';
+                const userId = target.replace('@s.whatsapp.net', '');
+
+                const badge = [
+                  '╭━🎖️ *Group Authority Notification* ━╮',
+                  `│ 👤 User: @${userId}`,
+                  '│ 🛡️ Role: Admin',
+                  '│ ⚡ Elevation: Success',
+                  '╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯',
+                  '✨ Admin access granted. Use it wisely.'
+                ].join('\n');
+
+                await professor.sendMessage(m.chat, {
+                  image: { url: imageUrl },
+                  caption: badge,
+                  mentions: [target]
+                }, { quoted: m });
+
+              } catch (err) {
+                console.error('Promotion error:', err);
+                reply('❌ Could not promote user. Ensure the number or tag is correct.');
+              }
             }
             break;
             case 'demote': {
-                if (!isGroup) return reply('Group only');
-                if (!isGroupAdmins && !Access) return reply('Admin only');
-                let target = m.mentionedJid && m.mentionedJid[0];
-                if (!target) return reply('Tag the user to demote!');
+              if (!isGroup) return reply('⚠️ This command works only in groups.');
+              if (!isGroupAdmins && !Access) return reply('🛑 You need admin privileges to do that.');
+
+              const target = m.mentionedJid?.[0] 
+                || (text?.match(/^\d{9,15}$/) ? `${text.trim()}@s.whatsapp.net` : null);
+
+              if (!target) return reply('👤 Mention a user or type their number (e.g., 2557xxxxxxx)');
+
+              try {
                 await professor.groupParticipantsUpdate(m.chat, [target], 'demote');
-                reply('User demoted to member!');
+
+                const userId = target.replace('@s.whatsapp.net', '');
+                const imageUrl = 'https://files.catbox.moe/y96u7s.jpg';
+
+                const badge = [
+                  '╭─ ❎ *Demotion Executed* ─╮',
+                  `│ 👤 *User:* @${userId}`,
+                  '│ 📉 *New Role:* Member',
+                  '│ 🔒 *Privileges:* Revoked',
+                  '╰────────────────────────╯',
+                  '🕶️ Admin access removed successfully.'
+                ].join('\n');
+
+                await professor.sendMessage(m.chat, {
+                  image: { url: imageUrl },
+                  caption: badge,
+                  mentions: [target]
+                }, { quoted: m });
+
+              } catch (err) {
+                console.error('Demotion error:', err);
+                reply('❌ Failed to demote user. Please check the details and try again.');
+              }
             }
             break;
             case 'groupdesc': {
@@ -420,16 +574,42 @@ module.exports = async function(professor, m, chatUpdate, store) {
                 reply(info);
             }
             break;
-            case "public": {
-                if (!Access) return reply('Owner only');
-                professor.public = true;
-                reply(`successfully changed to ${command}`);
+            case 'public': {
+               if (!Access) return reply('🛑 Owner access required to change bot mode.');
+
+               professor.public = true;
+
+               const message = [
+                 '╭─ 🔓 *Mode Change Confirmed* ─╮',
+                 '│ 🔧 Status: Public',
+                 '│ 🌐 Visibility: Global Access Enabled',
+                 `│ 📅 Time: ${new Date().toLocaleString()}`,
+                 '╰────────────────────────────╯'
+               ].join('\n');
+
+               await professor.sendMessage(m.chat, {
+                 image: { url: 'https://files.catbox.moe/y96u7s.jpg' },
+                 caption: message
+               }, { quoted: m });
             }
             break;
-            case "self": {
-                if (!Access) return reply('Owner only');
-                professor.public = false;
-                reply(`successfully changed to ${command}`);
+            case 'self': {
+              if (!Access) return reply('🛑 Owner access required to change bot mode.');
+
+              professor.public = false;
+
+              const message = [
+                '╭─ 🔒 *Mode Change Confirmed* ─╮',
+                '│ 🔧 Status: Self',
+                '│ 🛡️ Visibility: Owner Only',
+                `│ 📅 Time: ${new Date().toLocaleString()}`,
+                '╰────────────────────────────╯'
+              ].join('\n');
+
+              await professor.sendMessage(m.chat, {
+                image: { url: 'https://files.catbox.moe/y96u7s.jpg' },
+                caption: message
+              }, { quoted: m });
             }
             break;
             case "ping": {
@@ -441,27 +621,43 @@ module.exports = async function(professor, m, chatUpdate, store) {
                 await professor.sendMessage(m.chat, { text: `🔹 Pong: ${latency.toFixed(4)} MS ⚡` });
             }
             break;
-            case "owner":
-            case "xowner": {
-                let namaown = `PROFESSOR XMD`;
-                let NoOwn = `255740016011`;
-                var contact = await generateWAMessageFromContent(m.chat, {
-                  contactMessage: {
-                    displayName: namaown,
-                    vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:${namaown}\nitem1.TEL;waid=${NoOwn}:+${NoOwn}\nitem1.X-ABLabel:Ponsel\nX-WA-BIZ-DESCRIPTION: JavaScript coder\nX-WA-BIZ-NAME:[[ ༑ Professor-X5⿻ 𝐏𝐔𝐁𝐋𝐢𝐂 ༑ ]]\nEND:VCARD`
-                  }
-                }, {
-                  userJid: m.chat,
-                  quoted: m
-                });
-                professor.relayMessage(m.chat, contact.message, {
-                    messageId: contact.key.id
-                });
+            case 'owner': {
+              try {
+                const botJid = professor.user.id; // e.g., '255740016011@s.whatsapp.net'
+                const botNumber = botJid.split('@')[0];
+                const botName = 'PROFESSOR XMD'; // optional custom alias
+
+                const vcard = [
+                  'BEGIN:VCARD',
+                  'VERSION:3.0',
+                  `FN:${botName}`,
+                  `TEL;waid=${botNumber}:${botNumber}`,
+                  'END:VCARD'
+              ].join('\n');
+
+              const contactMsg = await generateWAMessageFromContent(m.chat, {
+                contactMessage: {
+                  displayName: botName,
+                  vcard
+                }
+              }, {
+                userJid: m.chat,
+                quoted: m
+              });
+
+              await professor.relayMessage(m.chat, contactMsg.message, {
+                messageId: contactMsg.key.id
+              });
+
+            } catch (err) {
+              console.error('Owner command error:', err);
+              reply('❌ Unable to fetch owner details from session.');
+            }
             }
             break;
             case "hidetag": {
-                if (!isGroup) return reply('Group only');
-                if (!isAdmins && !Access) return reply('Admin only');
+                if (!isGroup) return reply('⚠️ This command works only in group');
+                if (!isAdmins && !Access) return reply('You need admin privileges to do that.');
                 if (m.quoted) {
                     professor.sendMessage(m.chat, {
                         forward: m.quoted.fakeObj,
@@ -477,21 +673,46 @@ module.exports = async function(professor, m, chatUpdate, store) {
             }
             break;
             case 'truth': {
-                let truths = [
-                    "What was your most embarrassing moment?",
-                    "Have you ever lied to your best friend?",
-                    "What is your secret fear?",
-                    "Who do you love most in this group?"
-                ];
+              let truths = [
+                "What was your most embarrassing moment?",
+                "Have you ever lied to your best friend?",
+                "What is your secret fear?",
+                "Who do you love most in this group?",
+                "If you could spy on one group member for 24 hours, who would it be?",
+                "Have you ever stalked someone's profile without liking anything?",
+                "What’s a lie you've told to avoid drama?",
+                "Who do you secretly admire but pretend not to?",
+                "What’s one thing on your phone you don’t want anyone to see?",
+                "Have you ever been caught talking behind someone's back?",
+                "What's your most shameless moment on social media?",
+                "If your chats were leaked, which one would ruin you?",
+                "Have you ever flirted just to get attention or favors?",
+                "What’s your worst habit in relationships?",
+                "Have you ever rejected someone and later regretted it?",
+                "What's the weirdest DM you've received?",
+                "Have you ever ignored a message intentionally and lied about it?",
+                "Which emoji do you overuse when trying to flirt?",
+                "What’s something you pretend to understand but secretly don’t?",
+                "If your search history was exposed, what would embarrass you most?",
+                "What's a childish habit you still secretly enjoy?",
+                "Have you ever posted something just to provoke someone?",
+              ];
                 reply(truths[Math.floor(Math.random() * truths.length)]);
             }
             break;
             case 'dare': {
-                let dares = [
-                    "Send a voice note saying 'I am a bot!'",
-                    "Tag group owner and say 'I need airtime!'",
-                    "Change your profile pic to a meme for 1 hour."
-                ];
+              let dares = [
+                "Send a 10-second voice note saying: 'I am a bot in training' with your most dramatic voice.",
+                "Tag the group owner and say: 'I need AI upgrades, boss!' with a 🫡 emoji.",
+                "Change your About/Status to 'System: Updating… ⏳' for 10 minutes.",
+                "Reply to your last message with: 'System Rebooted ✅'.",
+                "Type the alphabet backwards in one go: Z to A — no mistakes allowed.",
+                "Send one message using only 5 emojis to describe your current mood.",
+                "Share one lyric line from the last song you listened to (no links).",
+                "Send a 5–10 second humming or beatbox voice note of your favorite tune.",
+                "Answer the next question in the chat using exactly 7 words.",
+                "Send a meme or GIF that matches today's vibe.",
+              ];
                 reply(dares[Math.floor(Math.random() * dares.length)]);
             }
             break;
@@ -508,15 +729,68 @@ module.exports = async function(professor, m, chatUpdate, store) {
             }
             break;
             case 'autotype': {
-                if (!['on','off'].includes(text)) return reply('Use: .autotype on/off');
-                global.autotype = text === 'on';
-                reply('Auto typing set to ' + text);
+              const isCreator = m.key.fromMe || ownerNumber.includes(m.sender);
+              if (!isCreator) return reply('🛑 Only the owner can change autotype settings.');
+
+              const input = args[0]?.toLowerCase();
+              const options = ['all', 'group', 'dm', 'off'];
+
+              if (!input) return reply(`🧠 Autotype Menu
+            🔹 .autotype all     → Enable everywhere
+            🔹 .autotype group   → Groups only
+            🔹 .autotype dm      → Private chats
+            🔹 .autotype off     → Turn off`);
+
+              if (!options.includes(input)) {
+                return reply(`❌ Invalid choice: *${input}*\n✅ Use: all / group / dm / off`);
+              }
+
+              if (input === 'off') {
+                global.autotype = false;
+                return reply('🔕 Autotype disabled.');
+              }
+
+              global.autotype = true;
+              global.autotypeTarget = input;
+
+              const scope =
+                input === 'group' ? 'in groups 🫂' :
+                input === 'dm'    ? 'in private chats 💬' :
+                'everywhere 🌐';
+
+              return reply(`✅ Autotype active ${scope}. Typing status will appear automatically.`);
             }
             break;
             case 'autorecord': {
-                if (!['on','off'].includes(text)) return reply('Use: .autorecord on/off');
-                global.autorecord = text === 'on';
-                reply('Auto recording set to ' + text);
+              const isCreator = m.key.fromMe || ownerNumber.includes(m.sender);
+              if (!isCreator) return reply('🔐 Only the owner can manage autorecord.');
+
+              const input = args[0]?.toLowerCase();
+              const modes = ['all', 'group', 'dm', 'off'];
+
+              if (!input) {
+                return reply(`🎙️ *Autorecord Menu*
+            🔹 .autorecord all     → Enable in all chats
+            🔸 .autorecord group   → Groups only
+            🔸 .autorecord dm      → DMs only
+            🚫 .autorecord off     → Disable autorecord\n\n🧩 Current mode: *${global.autorecord ? global.autorecordTarget : 'off'}*`);
+              }
+
+              if (!modes.includes(input)) {
+                return reply(`❌ Invalid mode: *${input}*\n✅ Try one of: all / group / dm / off`);
+              }
+
+              global.autorecord = input !== 'off';
+              global.autorecordTarget = input;
+
+              const label = {
+                all:   '🌐 everywhere',
+                group: '👥 group chats',
+                dm:    '💬 private chats',
+                off:   '🚫 disabled'
+              };
+
+              return reply(`🎤 Autorecord has been set to *${label[input]}*.\nSilent recording indicator will activate accordingly.`);
             }
             break;
             case 'antilink': {
@@ -551,29 +825,90 @@ module.exports = async function(professor, m, chatUpdate, store) {
             }
             break;
             case 'delete': {
-                if (!isGroup) return reply('Group only');
-                if (!isGroupAdmins && !Access) return reply('Admin only');
+                if (!isGroup) return reply('👥 This command works in group chats only');
+                if (!isGroupAdmins && !Access) return reply('Only admins can use this command');
                 if (!m.quoted) return reply('Reply to the message to delete!');
                 await professor.deleteMessage(m.chat, m.quoted.key);
                 reply('Message deleted!');
             }
             break;
             case 'welcome': {
-                if (!isGroup) return reply('Group only');
-                if (!isGroupAdmins && !Access) return reply('Admin only');
-                if (!['on','off'].includes(text)) return reply('Use: .welcome on/off');
-                global.welcome = text === 'on';
-                reply('Welcome message set to ' + text);
+              if (!isGroup) return reply('👥 This command works in group chats only.');
+              const mode = text?.toLowerCase();
+              if (!['on', 'off'].includes(mode)) {
+                return reply(`🎚️ *Welcome Setup Menu*
+
+             🟢 .welcome on   → Enable welcome messages
+            🔴 .welcome off  → Disable welcome messages`);
+              }
+
+              global.welcome = mode === 'on';
+              return reply(`✅ *Welcome messages* have been ${global.welcome ? '*enabled* 🟢' : '*disabled* 🔴'}`);
             }
             break;
+
+// 🎉 Auto Listener — Send Welcome Badge on Member Join
+            sock.ev.on('group-participants.update', async (anu) => {
+              if (!global.welcome || anu.action !== 'add') return;
+              try {
+                const meta = await sock.groupMetadata(anu.id);
+                for (const user of anu.participants) {
+                  const tag = user.split('@')[0];
+                  const imageUrl = 'https://files.catbox.moe/y96u7s.jpg'; // HD badge image
+
+                  await professor.sendMessage(anu.id, {
+                    image: { url: imageUrl },
+                    caption: `╔═══━░★░━═══╗
+                 👋 𝗛𝗲𝗹𝗹𝗼 @${tag}  
+                 🏠 𝗚𝗿𝗼𝘂𝗽: *${meta.subject}*  
+                 🎯 Enjoy your stay & vibe freely!
+                 ╚═══━░★░━═══╝`,
+                    mentions: [user]
+                  });
+                }
+              } catch (err) {
+                console.error('Error sending welcome:', err);
+              }
+            });
             case 'goodbye': {
-                if (!isGroup) return reply('Group only');
-                if (!isGroupAdmins && !Access) return reply('Admin only');
-                if (!['on','off'].includes(text)) return reply('Use: .goodbye on/off');
-                global.goodbye = text === 'on';
-                reply('Goodbye message set to ' + text);
+                if (!isGroup) return reply('👥 This command works in group chats only.');
+
+                const mode = text?.toLowerCase();
+                if (!['on', 'off'].includes(mode)) {
+                  return reply(`🎚️ *Goodbye Setup Menu*
+
+            🔴 .goodbye off  → Disable goodbye messages
+             🟢 .goodbye on   → Enable goodbye messages`);
+                }
+
+                global.goodbye = mode === 'on';
+                return reply(`✅ *Goodbye messages* have been ${global.goodbye ? '*enabled* 🟢' : '*disabled* 🔴'}`);
             }
             break;
+
+// 🎯 Auto Listener — Send Goodbye Badge on Member Leave
+            professor.ev.on('group-participants.update', async (anu) => {
+                if (!global.goodbye || anu.action !== 'remove') return;
+                try {
+                    const meta = await professor.groupMetadata(anu.id);
+                    for (const user of anu.participants) {
+                        const tag = user.split('@')[0];
+                        const imageUrl = 'https://files.catbox.moe/y96u7s.jpg'; // Badge yako ya custom
+
+                        await professor.sendMessage(anu.id, {
+                            image: { url: imageUrl },
+                            caption: `╔═══━░★░━═══╗
+                         👋 𝗚𝗼𝗼𝗱𝗯𝘆𝗲 @${tag}  
+                         🏠 𝗙𝗿𝗼𝗺: *${meta.subject}*  
+                         💌 We’ll miss you, take care!  
+                         ╚═══━░★░━═══╝`,
+                            mentions: [user]
+                        });
+                   }
+               } catch (err) {
+                   console.error(err);
+               }
+            });
             case 'setprefix': {
                 if (!Access) return reply('Owner only');
                 let newPrefix = args[0];
@@ -605,6 +940,81 @@ module.exports = async function(professor, m, chatUpdate, store) {
                 let minutes = Math.floor((up % 3600) / 60);
                 let seconds = Math.floor(up % 60);
                 reply(`Bot runtime: ${hours}h ${minutes}m ${seconds}s`);
+            }
+            break;
+            case 'getgp': {
+                if (!isGroup) return reply('🚫 This command can only be used in *groups*!');
+
+                reply('🌀 Fetching group profile picture...');
+                try {
+                  const ppUrl = await professor.profilePictureUrl(m.chat, 'image');
+                  await professor.sendMessage(
+                      m.chat,
+                      { image: { url: ppUrl }, caption: `✅ Here’s the group profile picture for *${groupMetadata.subject}*` },
+                      { quoted: m }
+                  );
+                } catch {
+                     reply('⚠️ Could not fetch group profile picture. The group might not have one.');
+                }
+            }
+            break;
+
+             case 'link': {
+                if (!isGroup) return reply('🚫 This command can only be used in *groups*.');
+                if (!isGroupAdmins && !Access) return reply('🔒 Only group *admins* can get the link.');
+
+                reply('⏳ Generating group invite link...');
+                try {
+                    const link = await professor.groupInviteCode(m.chat);
+                    reply(`📌 *Group Name:* ${groupMetadata.subject}\n🔗 *Invite Link:* https://chat.whatsapp.com/${link}`);
+                } catch {
+                    reply('⚠️ Failed to retrieve group link. Make sure I have admin permissions.');
+                }
+            }
+            break;
+             case 'getpp': {
+                if (isGroup) return reply('🚫 This command works only in *private chats*.');
+
+                let user = m.quoted ? m.quoted.sender : (text && text.includes('@')) ? text.replace(/[^0-9@]/g, '') : null;
+                if (!user) return reply('❌ Please *tag* or *mention* the user whose profile picture you want.');
+
+                try {
+                    const ppUrl = await professor.profilePictureUrl(user, 'image');
+                    await professor.sendMessage(
+                        m.chat,
+                        {
+                            image: { url: ppUrl },
+                            caption: `🖼 *Profile Picture of @${user.split('@')[0]}*`
+                        },
+                        { quoted: m, mentions: [user] }
+                    );
+                } catch {
+                    reply('⚠️ Could not fetch profile picture.');             }
+            }
+            break;
+            case 'edward': {
+                if (!m.quoted) return reply('❌ Please reply to a view once message.');
+
+    // Jaribu kupata message ya ndani ya view once
+                const viewOnce = m.quoted.message?.viewOnceMessageV2?.message || m.quoted.message?.viewOnceMessage?.message;
+                if (!viewOnce) return reply('❌ The replied message is not a view once message.');
+
+                try {
+                    const type = Object.keys(viewOnce)[0]; // imageMessage / videoMessage / audioMessage
+                    const mediaMsg = viewOnce[type];
+
+                    const mediaBuffer = await downloadContentFromMessage(mediaMsg, type.replace('Message', ''));
+                    let buffer = Buffer.from([]);
+                    for await (const chunk of mediaBuffer) {
+                        buffer = Buffer.concat([buffer, chunk]);
+                    }
+
+                    await professor.sendMessage(m.chat, { [type.includes('image') ? 'image' : type.includes('video') ? 'video' : 'audio']: buffer }, { quoted: m });
+
+                } catch (err) {
+                    console.error(err);
+                    reply('⚠️ Failed to retrieve the view once media.');
+                }
             }
             break;
             default: {
